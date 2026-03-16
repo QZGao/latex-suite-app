@@ -1,0 +1,3 @@
+[submodule "vendors/latex-suite-core"]
+	path = vendors/latex-suite-core
+	url = https://github.com/QZGao/latex-suite-core
