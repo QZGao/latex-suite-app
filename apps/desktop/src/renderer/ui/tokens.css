@@ -1,0 +1,15 @@
+:root {
+  color-scheme: light;
+  --color-bg: #f4efe5;
+  --color-panel: #fffdf8;
+  --color-panel-border: rgba(74, 61, 42, 0.16);
+  --color-divider: rgba(74, 61, 42, 0.12);
+  --color-preview-text: #2b241a;
+  --color-editor-text: #1f1a14;
+  --color-accent: #a9512e;
+  --color-selection: rgba(169, 81, 46, 0.18);
+  --shadow-popup: 0 24px 60px rgba(45, 31, 17, 0.18);
+  --font-sans: "IBM Plex Sans", "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", "Cascadia Mono", monospace;
+  --radius-shell: 18px;
+}

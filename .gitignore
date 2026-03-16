@@ -137,3 +137,16 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Visual Studio / .NET user state
+.vs/
+*.user
+*.rsuser
+*.suo
+*.sln.docstates
+TestResults/
+
+# OS metadata
+Thumbs.db
+Desktop.ini
+.DS_Store

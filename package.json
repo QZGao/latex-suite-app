@@ -1,0 +1,17 @@
+{
+  "name": "latex-suite-app",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.32.1",
+  "scripts": {
+    "build:vendor": "npm --prefix vendors/latex-suite-core run build",
+    "build:contracts": "corepack pnpm --filter @latex-suite/contracts build",
+    "build:desktop": "corepack pnpm --filter @latex-suite/desktop build",
+    "build:dotnet": "dotnet build latex-suite-app.sln",
+    "publish:bridge": "dotnet publish apps/win-bridge/win-bridge.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true",
+    "build": "npm run build:vendor && npm run build:contracts && npm run build:desktop && npm run build:dotnet",
+    "test:desktop": "corepack pnpm --filter @latex-suite/desktop test",
+    "test": "npm run test:desktop",
+    "dev": "npm run build:contracts && npm run build:vendor && corepack pnpm --filter @latex-suite/desktop dev"
+  }
+}

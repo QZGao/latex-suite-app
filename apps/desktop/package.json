@@ -1,0 +1,27 @@
+{
+  "name": "@latex-suite/desktop",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@latex-suite/contracts": "workspace:*",
+    "@codemirror/state": "^6.5.2",
+    "@codemirror/view": "^6.38.6",
+    "codemirror": "^6.0.2",
+    "electron": "^37.2.6",
+    "katex": "^0.16.22"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "electron-vite": "^4.0.0",
+    "jsdom": "^26.1.0",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.3",
+    "vitest": "^2.0.5"
+  }
+}
