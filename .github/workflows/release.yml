@@ -88,24 +88,27 @@ jobs:
           fetch-depth: 0
           submodules: recursive
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+          run_install: false
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 9.0.x
 
-      - name: Enable Corepack
-        shell: pwsh
-        run: corepack enable
-
       - name: Install dependencies
         shell: pwsh
-        run: corepack pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: Verify workspace package versions
         shell: pwsh
