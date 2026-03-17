@@ -24,7 +24,17 @@ Download the latest installer from the [releases page](https://github.com/QZGao/
 
 ### Setup global hotkey and launch mode
 
-Once the app is running, right-click the system tray icon and select "Settings" to open the settings window. From there you can set up the global hotkey and launch mode. You can also change the launch mode on the fly by right-clicking the system tray icon and selecting the desired mode from the "Mode" submenu.
+Once the app is running, right-click the system tray icon and select "Settings..." to open the settings window. From there you can set up the global hotkey and launch mode. You can also change the launch mode on the fly by right-clicking the system tray icon and selecting the desired mode from the "Mode" submenu.
+
+### Custom snippets
+
+The app supports custom snippets defined in the `user-snippets.js` file located in the app data directory. You can find the snippet file by right-clicking the system tray icon and select "Settings...", then click the corresponding path link under the "Snippet files" section. The snippet file is an array of rules, where each rule has a `trigger`, a `replacement`, and `options`. The `trigger` is the string that will be replaced by the `replacement` when the rule is applied. The `options` can be used to specify conditions for when the rule should be applied, such as only applying the rule when appending text.
+
+```js
+{trigger: "op", replacement: "\\operatorname{$0}$1", options: "tA"},
+```
+
+For detailed documentation on the snippet format and options, see the [documentation](https://github.com/artisticat1/obsidian-latex-suite/blob/main/DOCS.md) from Obsidian LaTeX Suite.
 
 ## Development
 

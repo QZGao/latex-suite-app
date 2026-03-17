@@ -8,6 +8,8 @@ import {
 import {
   SETTINGS_IPC_CHANNELS,
   type DesktopSettingsPayload,
+  type OpenPathPayload,
+  type OpenPathResult,
   type DesktopSettingsSaveResult,
   type ShortcutCaptureStatePayload,
   type UpdateDesktopSettingsPayload
@@ -51,5 +53,8 @@ contextBridge.exposeInMainWorld("latexSuiteDesktop", {
   },
   setDesktopShortcutCaptureState(payload: ShortcutCaptureStatePayload): void {
     ipcRenderer.sendSync(SETTINGS_IPC_CHANNELS.setShortcutCaptureState, payload);
+  },
+  openDesktopPath(payload: OpenPathPayload): Promise<OpenPathResult> {
+    return ipcRenderer.invoke(SETTINGS_IPC_CHANNELS.openPath, payload);
   }
 });

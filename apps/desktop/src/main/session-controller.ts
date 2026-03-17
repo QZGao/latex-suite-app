@@ -80,6 +80,10 @@ export class SessionController {
     const importStartedAt = performance.now();
     const importedText = await this.captureImportedText(interactionProfileId, triggerModifierKeys);
     const importDurationMs = Math.round(performance.now() - importStartedAt);
+    const userSnippetSource = readOptionalTextFile(settings.snippets.userSnippetFile);
+    const userVariableSource = readOptionalTextFile(settings.snippets.userVariableFile);
+    const hasUserSnippetSource = userSnippetSource?.trim().length > 0;
+    const hasUserVariableSource = userVariableSource?.trim().length > 0;
 
     await this.waitForTriggerModifiersToRelease(triggerModifierKeys, interactionProfileId, "popup", 180);
 
@@ -98,9 +102,9 @@ export class SessionController {
       initialText: importedText,
       popup: settings.popup,
       snippets: {
-        builtInEnabled: settings.snippets.builtInEnabled,
-        userSnippetSource: readOptionalTextFile(settings.snippets.userSnippetFile),
-        userVariableSource: readOptionalTextFile(settings.snippets.userVariableFile)
+        builtInEnabled: settings.snippets.builtInEnabled && !hasUserSnippetSource && !hasUserVariableSource,
+        userSnippetSource,
+        userVariableSource
       }
     };
     this.mountedSessionId = undefined;

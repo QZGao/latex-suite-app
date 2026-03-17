@@ -6,6 +6,7 @@ import {
 } from "@latex-suite/contracts";
 import { buildShortcutAcceleratorFromKeyEvent } from "../../shared/shortcut-accelerator.js";
 import { getRendererApi } from "../ipc/renderer-api.js";
+import type { DesktopSettingsPayload } from "../../shared/settings-payload.js";
 
 const INTERACTION_PROFILE_DESCRIPTIONS: Record<InteractionProfileId, string> = {
   insert: "Open the composer and insert the result at the caret.",
@@ -20,11 +21,15 @@ interface DraftSettings {
   defaultInteractionProfile: InteractionProfileId;
   launchAtLogin: boolean;
   shortcut: string;
+  userSnippetFile: string;
+  userVariableFile: string;
 }
 
 interface SettingsLayout {
   closeButton: HTMLButtonElement;
   launchAtLoginCheckbox: HTMLInputElement;
+  userSnippetFileInput: HTMLInputElement;
+  userVariableFileInput: HTMLInputElement;
   modeInputs: HTMLInputElement[];
   resetButton: HTMLButtonElement;
   saveButton: HTMLButtonElement;
@@ -115,6 +120,42 @@ function renderSettingsLayout(): SettingsLayout {
       </label>
     </section>
 
+    <section class="settings-section">
+      <div class="settings-section-copy">
+        <h2 class="settings-section-title">Snippet files</h2>
+        <p class="settings-section-description">
+          Edit these files in your preferred editor. LaTeX Suite uses them as the full
+          snippet and variable source, replacing the defaults when present.
+        </p>
+      </div>
+
+      <div class="settings-field-group">
+        <label class="settings-field-label" for="settings-user-snippet-file">Snippet file</label>
+        <input
+          id="settings-user-snippet-file"
+          class="settings-path-input"
+          type="text"
+          readonly
+          title="Double-click to open this file in the default app."
+          spellcheck="false"
+          aria-label="User snippet file path"
+        />
+      </div>
+
+      <div class="settings-field-group">
+        <label class="settings-field-label" for="settings-user-variable-file">Variable file</label>
+        <input
+          id="settings-user-variable-file"
+          class="settings-path-input"
+          type="text"
+          readonly
+          title="Double-click to open this file in the default app."
+          spellcheck="false"
+          aria-label="User variable file path"
+        />
+      </div>
+    </section>
+
     <footer class="settings-footer">
       <p class="settings-status" data-tone="info"></p>
       <div class="settings-footer-actions">
@@ -124,18 +165,22 @@ function renderSettingsLayout(): SettingsLayout {
     </footer>
   `;
 
-  const shortcutInput = shell.querySelector(".settings-shortcut-input");
-  const launchAtLoginCheckbox = shell.querySelector(".settings-checkbox");
-  const resetButton = shell.querySelector(".settings-reset-button");
-  const saveButton = shell.querySelector(".settings-save-button");
-  const closeButton = shell.querySelector(".settings-close-button");
-  const statusMessage = shell.querySelector(".settings-status");
+  const shortcutInput = shell.querySelector<HTMLInputElement>(".settings-shortcut-input");
+  const launchAtLoginCheckbox = shell.querySelector<HTMLInputElement>(".settings-checkbox");
+  const userSnippetFileInput = shell.querySelector<HTMLInputElement>("#settings-user-snippet-file");
+  const userVariableFileInput = shell.querySelector<HTMLInputElement>("#settings-user-variable-file");
+  const resetButton = shell.querySelector<HTMLButtonElement>(".settings-reset-button");
+  const saveButton = shell.querySelector<HTMLButtonElement>(".settings-save-button");
+  const closeButton = shell.querySelector<HTMLButtonElement>(".settings-close-button");
+  const statusMessage = shell.querySelector<HTMLElement>(".settings-status");
   const modeInputs = Array.from(shell.querySelectorAll<HTMLInputElement>(".settings-mode-input"));
 
   if (
     !shortcutInput ||
     !launchAtLoginCheckbox ||
     !resetButton ||
+    !userSnippetFileInput ||
+    !userVariableFileInput ||
     !saveButton ||
     !closeButton ||
     !statusMessage ||
@@ -148,6 +193,8 @@ function renderSettingsLayout(): SettingsLayout {
     closeButton,
     launchAtLoginCheckbox,
     modeInputs,
+    userSnippetFileInput,
+    userVariableFileInput,
     resetButton,
     saveButton,
     shell,
@@ -176,16 +223,28 @@ export async function mountSettingsApp(root: HTMLElement): Promise<void> {
 
   let draftSettings: DraftSettings = {
     defaultInteractionProfile: "insert",
+    userSnippetFile: "",
+    userVariableFile: "",
     shortcut: "",
     launchAtLogin: false
   };
   let savedSettings: DraftSettings = {
     defaultInteractionProfile: "insert",
+    userSnippetFile: "",
+    userVariableFile: "",
     shortcut: "",
     launchAtLogin: false
   };
   let isSaving = false;
   let isShortcutCaptureActive = false;
+
+  const toDraftSettings = (settings: DesktopSettingsPayload): DraftSettings => ({
+    shortcut: settings.shortcut,
+    launchAtLogin: settings.launchAtLogin,
+    defaultInteractionProfile: settings.defaultInteractionProfile,
+    userSnippetFile: settings.snippets?.userSnippetFile ?? "",
+    userVariableFile: settings.snippets?.userVariableFile ?? ""
+  });
 
   const setShortcutCaptureActive = (active: boolean): void => {
     if (isShortcutCaptureActive === active) {
@@ -196,12 +255,30 @@ export async function mountSettingsApp(root: HTMLElement): Promise<void> {
     api.setDesktopShortcutCaptureState({ active });
   };
 
+  const openPath = async (label: string, path: string): Promise<void> => {
+    const filePath = path.trim();
+    if (!filePath) {
+      setStatus(layout, "error", `No ${label} path is configured.`);
+      return;
+    }
+
+    const result = await api.openDesktopPath({ path: filePath });
+    if (!result.ok) {
+      setStatus(layout, "error", result.error ?? `Failed to open ${label}.`);
+      return;
+    }
+
+    setStatus(layout, "info", `${label} opened in your default editor.`);
+  };
+
   const refreshActions = (): void => {
     const hasShortcut = draftSettings.shortcut.length > 0;
     const isDirty = !areSettingsEqual(draftSettings, savedSettings);
 
     layout.shortcutInput.disabled = isSaving;
     layout.launchAtLoginCheckbox.disabled = isSaving;
+    layout.userSnippetFileInput.disabled = isSaving;
+    layout.userVariableFileInput.disabled = isSaving;
     layout.closeButton.disabled = isSaving;
     layout.resetButton.disabled = isSaving || draftSettings.shortcut === DEFAULT_GLOBAL_SHORTCUT;
     layout.saveButton.disabled = isSaving || !hasShortcut || !isDirty;
@@ -210,9 +287,20 @@ export async function mountSettingsApp(root: HTMLElement): Promise<void> {
     }
   };
 
+  const installSnippetPathOpenHandlers = (): void => {
+    layout.userSnippetFileInput.addEventListener("dblclick", () => {
+      void openPath("Snippet file", layout.userSnippetFileInput.value);
+    });
+    layout.userVariableFileInput.addEventListener("dblclick", () => {
+      void openPath("Variable file", layout.userVariableFileInput.value);
+    });
+  };
+
   const syncLayoutFromDraft = (): void => {
     layout.shortcutInput.value = draftSettings.shortcut;
     layout.launchAtLoginCheckbox.checked = draftSettings.launchAtLogin;
+    layout.userSnippetFileInput.value = draftSettings.userSnippetFile;
+    layout.userVariableFileInput.value = draftSettings.userVariableFile;
     for (const modeInput of layout.modeInputs) {
       modeInput.checked = modeInput.value === draftSettings.defaultInteractionProfile;
     }
@@ -221,11 +309,7 @@ export async function mountSettingsApp(root: HTMLElement): Promise<void> {
 
   try {
     const settings = await api.getDesktopSettings();
-    savedSettings = {
-      shortcut: settings.shortcut,
-      launchAtLogin: settings.launchAtLogin,
-      defaultInteractionProfile: settings.defaultInteractionProfile
-    };
+    savedSettings = toDraftSettings(settings);
     draftSettings = {
       ...savedSettings
     };
@@ -233,8 +317,12 @@ export async function mountSettingsApp(root: HTMLElement): Promise<void> {
     setStatus(layout, "info", "Choose a mode, hotkey, or startup preference, then save.");
   } catch (error) {
     layout.shortcutInput.value = "";
+    layout.userSnippetFileInput.value = "";
+    layout.userVariableFileInput.value = "";
     layout.launchAtLoginCheckbox.checked = false;
     layout.shortcutInput.disabled = true;
+    layout.userSnippetFileInput.disabled = true;
+    layout.userVariableFileInput.disabled = true;
     layout.launchAtLoginCheckbox.disabled = true;
     layout.resetButton.disabled = true;
     layout.saveButton.disabled = true;
@@ -248,6 +336,8 @@ export async function mountSettingsApp(root: HTMLElement): Promise<void> {
     );
     return;
   }
+
+  installSnippetPathOpenHandlers();
 
   for (const modeInput of layout.modeInputs) {
     modeInput.addEventListener("change", () => {
@@ -342,19 +432,13 @@ export async function mountSettingsApp(root: HTMLElement): Promise<void> {
 
       if (!result.ok) {
         setStatus(layout, "error", result.error ?? "Failed to save settings.");
-        draftSettings = {
-          ...result.settings
-        };
+        draftSettings = toDraftSettings(result.settings);
         syncLayoutFromDraft();
         return;
       }
 
-      savedSettings = {
-        ...result.settings
-      };
-      draftSettings = {
-        ...result.settings
-      };
+      savedSettings = toDraftSettings(result.settings);
+      draftSettings = savedSettings;
       syncLayoutFromDraft();
       setStatus(layout, "success", "Settings saved.");
     } catch (error) {

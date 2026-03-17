@@ -165,7 +165,8 @@ export class DesktopApp {
         settings: {
           shortcut: previousSettings.shortcut,
           launchAtLogin: previousSettings.launchAtLogin,
-          defaultInteractionProfile: previousSettings.defaultInteractionProfile
+          defaultInteractionProfile: previousSettings.defaultInteractionProfile,
+          snippets: previousSettings.snippets
         },
         error: shortcutResult.error
       };
@@ -200,7 +201,8 @@ export class DesktopApp {
         settings: {
           shortcut: previousSettings.shortcut,
           launchAtLogin: previousSettings.launchAtLogin,
-          defaultInteractionProfile: previousSettings.defaultInteractionProfile
+          defaultInteractionProfile: previousSettings.defaultInteractionProfile,
+          snippets: previousSettings.snippets
         },
         error: error instanceof Error ? error.message : String(error)
       };
@@ -217,7 +219,8 @@ export class DesktopApp {
       settings: {
         shortcut: nextSettings.shortcut,
         launchAtLogin: nextSettings.launchAtLogin,
-        defaultInteractionProfile: nextSettings.defaultInteractionProfile
+        defaultInteractionProfile: nextSettings.defaultInteractionProfile,
+        snippets: nextSettings.snippets
       }
     };
   }

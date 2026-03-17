@@ -9,6 +9,8 @@ import type {
 } from "../../shared/composer-payload.js";
 import type {
   DesktopSettingsPayload,
+  OpenPathPayload,
+  OpenPathResult,
   DesktopSettingsSaveResult,
   ShortcutCaptureStatePayload,
   UpdateDesktopSettingsPayload
@@ -24,6 +26,7 @@ export interface DesktopRendererApi {
   getDesktopSettings(): Promise<DesktopSettingsPayload>;
   saveDesktopSettings(payload: UpdateDesktopSettingsPayload): Promise<DesktopSettingsSaveResult>;
   setDesktopShortcutCaptureState(payload: ShortcutCaptureStatePayload): void;
+  openDesktopPath(payload: OpenPathPayload): Promise<OpenPathResult>;
 }
 
 declare global {
@@ -61,7 +64,11 @@ const fallbackApi: DesktopRendererApi = {
     return {
       shortcut: DEFAULT_APP_SETTINGS.shortcut,
       launchAtLogin: false,
-      defaultInteractionProfile: DEFAULT_APP_SETTINGS.defaultInteractionProfile
+      defaultInteractionProfile: DEFAULT_APP_SETTINGS.defaultInteractionProfile,
+      snippets: {
+        userSnippetFile: undefined,
+        userVariableFile: undefined
+      }
     };
   },
   async saveDesktopSettings(
@@ -72,11 +79,21 @@ const fallbackApi: DesktopRendererApi = {
       settings: {
         shortcut: payload.shortcut,
         launchAtLogin: payload.launchAtLogin,
-        defaultInteractionProfile: payload.defaultInteractionProfile
+        defaultInteractionProfile: payload.defaultInteractionProfile,
+        snippets: {
+          userSnippetFile: undefined,
+          userVariableFile: undefined
+        }
       }
     };
   },
-  setDesktopShortcutCaptureState(): void {}
+  setDesktopShortcutCaptureState(): void {},
+  async openDesktopPath(_payload: OpenPathPayload): Promise<OpenPathResult> {
+    return {
+      ok: false,
+      error: "Desktop settings bridge is unavailable."
+    };
+  }
 };
 
 let hasWarnedAboutMissingPreloadApi = false;
