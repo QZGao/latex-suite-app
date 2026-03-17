@@ -6,7 +6,8 @@ import {
   findPortableDesktopExecutableName,
   getDesktopWinBridgeLaunchSpec,
   getDevelopmentDesktopLaunchSpec,
-  getPackagedWinBridgeLaunchSpec
+  getPackagedWinBridgeLaunchSpec,
+  resolveDevelopmentDesktopExecutablePath
 } from "./runtime-paths.js";
 
 const temporaryDirectories: string[] = [];
@@ -69,13 +70,23 @@ describe("runtime path resolution", () => {
   });
 
   it("resolves the development desktop launch spec through the local Electron shim", () => {
-    const launchSpec = getDevelopmentDesktopLaunchSpec(["--trace-warnings"]);
+    const executablePath = join(createTempResourcesPath(), "electron.exe");
+    writeFileSync(executablePath, "");
+    const launchSpec = getDevelopmentDesktopLaunchSpec(["--trace-warnings"], executablePath);
 
-    expect(launchSpec.command).toMatch(
-      /apps[\\/]+desktop[\\/]+node_modules[\\/]+electron[\\/]+dist[\\/]+electron\.exe$/i
-    );
+    expect(launchSpec.command).toBe(executablePath);
     expect(launchSpec.args).toEqual([".", "--trace-warnings"]);
     expect(launchSpec.cwd).toMatch(/apps[\\/]+desktop$/i);
+  });
+
+  it("resolves the installed Electron executable path from the package location", () => {
+    const packageRoot = createTempResourcesPath();
+    const executablePath = join(packageRoot, "dist", "electron.exe");
+
+    mkdirSync(dirname(executablePath), { recursive: true });
+    writeFileSync(executablePath, "");
+
+    expect(resolveDevelopmentDesktopExecutablePath(packageRoot)).toBe(executablePath);
   });
 
   it("finds the packaged portable desktop executable by name", () => {

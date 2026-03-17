@@ -1,7 +1,7 @@
 import type { BrowserWindow as BrowserWindowType } from "electron/main";
 import { join } from "node:path";
 import type { AppSettings, HostBounds } from "@latex-suite/contracts";
-import { BrowserWindow, screen } from "./electron-main.js";
+import { app, BrowserWindow, screen } from "./electron-main.js";
 import { computePopupBounds } from "./popup-placement.js";
 import { log, logError } from "./logger.js";
 import { showPopupWindowWithScheduler } from "./popup-focus.js";
@@ -96,7 +96,7 @@ export function createPopupWindow(
 export function showPopupWindow(window: BrowserWindow): void {
   showPopupWindowWithScheduler(window, undefined, (message, payload) => {
     log("popup", message, payload);
-  });
+  }, app);
 }
 
 export function positionPopupWindow(

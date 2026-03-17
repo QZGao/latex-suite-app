@@ -5,7 +5,7 @@ import type {
   DesktopSettingsSaveResult,
   UpdateDesktopSettingsPayload
 } from "../shared/settings-payload.js";
-import { app } from "./electron-main.js";
+import { app, globalShortcut } from "./electron-main.js";
 import { getDesktopWinBridgeLaunchSpec } from "./runtime-paths.js";
 import {
   getConfiguredAppName,
@@ -34,7 +34,7 @@ export class DesktopApp {
     )
   );
   private readonly settingsStore = new SettingsStore();
-  private readonly shortcutService = new ShortcutService();
+  private readonly shortcutService = new ShortcutService(globalShortcut);
   private readonly settingsWindowService = new SettingsWindowService({
     getSettings: () => this.requireSettings(),
     saveSettings: (payload) => this.saveDesktopSettings(payload),

@@ -49,10 +49,6 @@ jobs:
         shell: pwsh
         run: npm run build:dotnet
 
-      - name: Rebuild Electron desktop runtime
-        shell: pwsh
-        run: pnpm --filter @latex-suite/desktop rebuild electron
-
       - name: Run test suite
         shell: pwsh
         run: npm run test

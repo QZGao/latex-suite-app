@@ -1,5 +1,4 @@
 import { normalizeShortcutAccelerator } from "../shared/shortcut-accelerator.js";
-import { globalShortcut } from "./electron-main.js";
 import { log } from "./logger.js";
 
 export interface ShortcutRegistrationResult {
@@ -32,7 +31,7 @@ export class ShortcutService {
     this.handler?.();
   };
 
-  constructor(private readonly shortcutAdapter: GlobalShortcutAdapter = globalShortcut) {}
+  constructor(private readonly shortcutAdapter: GlobalShortcutAdapter) {}
 
   register(shortcut: string, handler: () => void): ShortcutRegistrationResult {
     this.handler = handler;

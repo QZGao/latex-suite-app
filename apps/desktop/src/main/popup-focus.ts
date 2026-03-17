@@ -1,5 +1,3 @@
-import { app } from "./electron-main.js";
-
 export interface PopupFocusWindow {
   show(): void;
   focus(): void;
@@ -24,6 +22,10 @@ export interface PopupFocusLogger {
 export interface PopupAppFocusTarget {
   focus(): void;
 }
+
+const NOOP_APP_FOCUS_TARGET: PopupAppFocusTarget = {
+  focus() {}
+};
 
 const POPUP_FOCUS_RETRY_DELAYS_MS = [0, 30, 90, 180, 320, 500] as const;
 
@@ -61,7 +63,7 @@ export function showPopupWindowWithScheduler(
   window: PopupFocusWindow,
   schedule: PopupFocusScheduler = defaultScheduler,
   log?: PopupFocusLogger,
-  appFocusTarget: PopupAppFocusTarget = app
+  appFocusTarget: PopupAppFocusTarget = NOOP_APP_FOCUS_TARGET
 ): void {
   if (window.isVisible() && hasPopupFocus(window)) {
     log?.("Popup focus request skipped because the popup is already focused.", {

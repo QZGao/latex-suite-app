@@ -1,4 +1,5 @@
 import { existsSync, readdirSync } from "node:fs";
+import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
 
@@ -12,6 +13,8 @@ export interface DesktopRuntimeContext {
   isPackaged: boolean;
   resourcesPath: string;
 }
+
+const require = createRequire(import.meta.url);
 
 function getRepositoryRoot(): string {
   return resolve(fileURLToPath(new URL("../../../../", import.meta.url)));
@@ -27,6 +30,30 @@ function assertArtifactExists(path: string, hint: string): string {
 
 function resolveRepositoryArtifact(relativePath: string, hint: string): string {
   return assertArtifactExists(resolve(getRepositoryRoot(), relativePath), hint);
+}
+
+function getDevelopmentDesktopExecutableName(platform: NodeJS.Platform = process.platform): string {
+  switch (platform) {
+    case "darwin":
+      return join("Electron.app", "Contents", "MacOS", "Electron");
+    case "win32":
+      return "electron.exe";
+    default:
+      return "electron";
+  }
+}
+
+function resolveInstalledElectronPackageRoot(): string {
+  return dirname(require.resolve("electron/package.json"));
+}
+
+export function resolveDevelopmentDesktopExecutablePath(
+  packageRoot: string = resolveInstalledElectronPackageRoot()
+): string {
+  return assertArtifactExists(
+    join(packageRoot, "dist", getDevelopmentDesktopExecutableName()),
+    "Electron desktop runtime. Run pnpm install first"
+  );
 }
 
 export function findPortableDesktopExecutableName(
@@ -65,12 +92,12 @@ export function getDevelopmentWinBridgeLaunchSpec(): LaunchSpec {
 /**
  * Returns the dev/test launch spec for the Electron desktop shell.
  */
-export function getDevelopmentDesktopLaunchSpec(args: string[] = []): LaunchSpec {
+export function getDevelopmentDesktopLaunchSpec(
+  args: string[] = [],
+  executablePath: string = resolveDevelopmentDesktopExecutablePath()
+): LaunchSpec {
   return {
-    command: resolveRepositoryArtifact(
-      "apps/desktop/node_modules/electron/dist/electron.exe",
-      "Electron desktop runtime. Run pnpm install first"
-    ),
+    command: executablePath,
     args: [".", ...args],
     cwd: resolve(getRepositoryRoot(), "apps", "desktop")
   };
