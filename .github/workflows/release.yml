@@ -1,0 +1,153 @@
+name: Release Windows App
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - package.json
+      - apps/desktop/package.json
+      - packages/contracts/package.json
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      should_release: ${{ steps.release_gate.outputs.should_release }}
+      version: ${{ steps.version.outputs.value }}
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify workspace package versions
+        run: node ./scripts/check-package-versions.mjs
+
+      - name: Read release version
+        id: version
+        run: |
+          VERSION="$(node -e 'const fs = require("node:fs"); process.stdout.write(JSON.parse(fs.readFileSync("package.json", "utf8")).version);')"
+          echo "value=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Detect version bump
+        id: release_gate
+        env:
+          CURRENT_VERSION: ${{ steps.version.outputs.value }}
+          BEFORE_SHA: ${{ github.event.before }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ -z "$BEFORE_SHA" ] || [ "$BEFORE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          PREVIOUS_VERSION="$(git show "$BEFORE_SHA:package.json" 2>/dev/null | node -e 'let input = ""; process.stdin.on("data", (chunk) => { input += chunk; }); process.stdin.on("end", () => { try { process.stdout.write(JSON.parse(input).version); } catch { process.exit(1); } });' || true)"
+
+          if [ "$PREVIOUS_VERSION" = "$CURRENT_VERSION" ]; then
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "should_release=true" >> "$GITHUB_OUTPUT"
+
+  release:
+    needs: prepare
+    if: needs.prepare.outputs.should_release == 'true'
+    runs-on: windows-latest
+    env:
+      RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+      RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+      LATEX_SUITE_REQUIRE_SIGNING: "false"
+      LATEX_SUITE_ENABLE_EXECUTABLE_EDITING: "false"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Enable Corepack
+        shell: pwsh
+        run: corepack enable
+
+      - name: Install dependencies
+        shell: pwsh
+        run: corepack pnpm install --frozen-lockfile
+
+      - name: Verify workspace package versions
+        shell: pwsh
+        run: node ./scripts/check-package-versions.mjs
+
+      - name: Run test suite
+        shell: pwsh
+        run: npm run test
+
+      - name: Build unsigned Windows release
+        shell: pwsh
+        run: npm run dist:desktop:win
+
+      - name: Generate checksums
+        shell: pwsh
+        run: |
+          Get-FileHash "artifacts/desktop/LaTeX Suite Setup $env:RELEASE_VERSION.exe" -Algorithm SHA256 |
+            ForEach-Object { "$($_.Hash.ToLower())  $($_.Path | Split-Path -Leaf)" } |
+            Set-Content "artifacts/desktop/SHA256SUMS.txt"
+          Get-FileHash "artifacts/desktop/LaTeX Suite $env:RELEASE_VERSION.exe" -Algorithm SHA256 |
+            ForEach-Object { "$($_.Hash.ToLower())  $($_.Path | Split-Path -Leaf)" } |
+            Add-Content "artifacts/desktop/SHA256SUMS.txt"
+
+      - name: Publish GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          $artifacts = @(
+            "artifacts/desktop/LaTeX Suite Setup $env:RELEASE_VERSION.exe",
+            "artifacts/desktop/LaTeX Suite $env:RELEASE_VERSION.exe",
+            "artifacts/desktop/SHA256SUMS.txt"
+          )
+
+          gh release view $env:RELEASE_TAG *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $env:RELEASE_TAG $artifacts --clobber
+            exit 0
+          }
+
+          gh release create $env:RELEASE_TAG $artifacts `
+            --title "LaTeX Suite $env:RELEASE_VERSION" `
+            --generate-notes `
+            --target $env:GITHUB_SHA

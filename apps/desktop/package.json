@@ -10,10 +10,12 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "test": "vitest run",
-    "package:dir": "electron-vite build && node ./scripts/run-electron-builder.mjs --dir --config electron-builder.yml",
-    "dist:win": "electron-vite build && node ./scripts/run-electron-builder.mjs --win nsis portable --config electron-builder.yml"
+    "package:dir": "electron-vite build && node ./scripts/run-electron-builder.mjs --dir --config electron-builder.config.mjs",
+    "dist:win": "electron-vite build && node ./scripts/run-electron-builder.mjs --win nsis portable --config electron-builder.config.mjs"
   },
   "devDependencies": {
+    "@codemirror/commands": "^6.9.1",
+    "@codemirror/language": "^6.11.3",
     "@codemirror/state": "^6.5.2",
     "@codemirror/view": "^6.38.6",
     "@latex-suite/contracts": "workspace:*",

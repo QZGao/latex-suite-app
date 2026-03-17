@@ -1,10 +1,12 @@
-# latex-suite-app
+# LaTeX Suite desktop app
 
-Windows-only Electron app for fast LaTeX composition with a native bridge and a vendored `latex-suite-core`.
+Windows-only Electron app for fast LaTeX composition.
 
 ## Commands
 
 - `corepack pnpm install`
+- `npm run version:check`
+- `npm run version:bump -- <version>`
 - `npm run test`
 - `npm run build`
 - `npm run package:desktop:dir`
@@ -13,6 +15,6 @@ Windows-only Electron app for fast LaTeX composition with a native bridge and a 
 ## Release Outputs
 
 - unpacked app: `artifacts/desktop/win-unpacked`
-- installer: `artifacts/desktop/LaTeX Suite Setup 0.1.0.exe`
-- portable build: `artifacts/desktop/LaTeX Suite 0.1.0.exe`
+- installer: `artifacts/desktop/LaTeX Suite Setup <version>.exe`
+- portable build: `artifacts/desktop/LaTeX Suite <version>.exe`
 - packaged bridge payload: `artifacts/win-bridge/win-x64/win-bridge.exe`

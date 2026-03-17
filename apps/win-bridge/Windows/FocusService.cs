@@ -29,7 +29,10 @@ internal sealed class FocusService
 
         try
         {
-            ShowWindowAsync(hwnd, SwRestore);
+            if (IsIconic(hwnd))
+            {
+                ShowWindowAsync(hwnd, SwRestore);
+            }
 
             if (foregroundThreadId != 0 && foregroundThreadId != currentThreadId)
             {
@@ -104,6 +107,10 @@ internal sealed class FocusService
     [DllImport("user32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool IsWindow(IntPtr hwnd);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool IsIconic(IntPtr hwnd);
 
     [DllImport("user32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]

@@ -4,6 +4,9 @@
   "version": "0.1.0",
   "packageManager": "pnpm@10.32.1",
   "scripts": {
+    "version:check": "node ./scripts/check-package-versions.mjs",
+    "version:bump": "node ./scripts/bump-package-versions.mjs",
+    "test:repo": "node --test ./scripts/*.test.mjs",
     "build:vendor": "npm --prefix vendors/latex-suite-core run build",
     "build:contracts": "corepack pnpm --filter @latex-suite/contracts build",
     "build:desktop": "corepack pnpm --filter @latex-suite/desktop build",
@@ -13,7 +16,7 @@
     "dist:desktop:win": "npm run build:vendor && npm run build:contracts && npm run publish:bridge && corepack pnpm --filter @latex-suite/desktop dist:win",
     "build": "npm run build:vendor && npm run build:contracts && npm run build:desktop && npm run build:dotnet",
     "test:desktop": "corepack pnpm --filter @latex-suite/desktop test",
-    "test": "npm run test:desktop",
+    "test": "npm run test:repo && npm run version:check && npm run test:desktop",
     "dev": "npm run build:contracts && npm run build:vendor && corepack pnpm --filter @latex-suite/desktop dev"
   }
 }

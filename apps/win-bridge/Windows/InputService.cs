@@ -28,6 +28,11 @@ internal sealed class InputService
 
     public void SendKeys(IReadOnlyList<string> keys, int keyDelayMs, int settleDelayMs)
     {
+        if (keyDelayMs > 0)
+        {
+            Thread.Sleep(keyDelayMs);
+        }
+
         foreach (var chord in keys)
         {
             SendKeysInternal.SendWait(TranslateChord(chord));

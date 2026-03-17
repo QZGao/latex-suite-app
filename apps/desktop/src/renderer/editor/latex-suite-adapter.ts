@@ -14,7 +14,7 @@ export async function loadLatexSuiteExtensions(
 ): Promise<Extension[]> {
   const bundle = buildLatexSuiteSourceBundle(snippetPayload);
   const vendorModule = (await import(
-    "../../../../../vendors/latex-suite-core/main.js"
+    "../../../../../vendors/latex-suite-core/main.mjs"
   )) as LatexSuiteVendorModule;
 
   return vendorModule.latexSuiteWithDefaults({

@@ -19,6 +19,7 @@ export interface ComposerCommitPayload {
 
 export const COMPOSER_IPC_CHANNELS = {
   getBootstrap: "composer:get-bootstrap",
+  pushBootstrap: "composer:push-bootstrap",
   commit: "composer:commit",
   discard: "composer:discard"
 } as const;

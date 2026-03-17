@@ -1,10 +1,11 @@
 import { app } from "electron";
+import { join } from "node:path";
 import { BridgeClient } from "./bridge-client.js";
 import { getDesktopWinBridgeLaunchSpec } from "./runtime-paths.js";
 import { SessionController } from "./session-controller.js";
 import { SettingsStore } from "./settings-store.js";
 import { ShortcutService } from "./shortcut-service.js";
-import { log } from "./logger.js";
+import { initializeFileLogging, log } from "./logger.js";
 import { TrayService } from "./tray-service.js";
 
 /**
@@ -25,6 +26,9 @@ export class DesktopApp {
   private readonly trayService = new TrayService();
 
   async start(): Promise<void> {
+    app.setName("latex-suite-app");
+    app.setAppUserModelId("com.latexsuite.app");
+
     if (!app.requestSingleInstanceLock()) {
       app.quit();
       return;
@@ -35,6 +39,7 @@ export class DesktopApp {
     });
 
     await app.whenReady();
+    initializeFileLogging(join(app.getPath("userData"), "logs", "desktop.log"));
     const settings = this.settingsStore.load();
     app.on("window-all-closed", (event) => {
       event.preventDefault();

@@ -97,6 +97,7 @@ export class SessionController {
 
     const popupWindow = this.ensurePopupWindow(settings);
     positionPopupWindow(popupWindow, settings.popup, source.bounds);
+    this.pushBootstrapToPopup(popupWindow);
     popupWindow.show();
     popupWindow.focus();
   }
@@ -122,6 +123,22 @@ export class SessionController {
       this.popupWindow = undefined;
     });
     return this.popupWindow;
+  }
+
+  private pushBootstrapToPopup(window: BrowserWindow): void {
+    if (!this.bootstrapPayload) {
+      return;
+    }
+
+    if (window.webContents.isLoadingMainFrame()) {
+      return;
+    }
+
+    if (window.webContents.getURL().length === 0) {
+      return;
+    }
+
+    window.webContents.send(COMPOSER_IPC_CHANNELS.pushBootstrap, this.bootstrapPayload);
   }
 
   private getBootstrapPayload(): ComposerBootstrapPayload {

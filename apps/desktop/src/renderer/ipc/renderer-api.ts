@@ -5,6 +5,7 @@ import type {
 
 export interface DesktopRendererApi {
   getComposerBootstrap(): Promise<ComposerBootstrapPayload>;
+  onComposerBootstrap(listener: (payload: ComposerBootstrapPayload) => void): () => void;
   commitComposer(payload: ComposerCommitPayload): Promise<void>;
   discardComposer(): Promise<void>;
 }
@@ -33,13 +34,25 @@ const fallbackApi: DesktopRendererApi = {
   async getComposerBootstrap(): Promise<ComposerBootstrapPayload> {
     return FALLBACK_BOOTSTRAP;
   },
+  onComposerBootstrap(): () => void {
+    return () => {};
+  },
   async commitComposer(): Promise<void> {},
   async discardComposer(): Promise<void> {}
 };
+
+let hasWarnedAboutMissingPreloadApi = false;
 
 /**
  * Returns the preload API, or a predictable fallback when tests run in jsdom.
  */
 export function getRendererApi(): DesktopRendererApi {
+  if (!window.latexSuiteDesktop && !hasWarnedAboutMissingPreloadApi) {
+    hasWarnedAboutMissingPreloadApi = true;
+    console.error(
+      "[renderer] Missing preload API; falling back to test bootstrap. Commit/discard will be no-ops."
+    );
+  }
+
   return window.latexSuiteDesktop ?? fallbackApi;
 }
