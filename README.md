@@ -2,7 +2,7 @@
 
 # LaTeX Suite desktop app
 
-Lightweight Windows Electron app for fast LaTeX composition.
+Lightweight Windows app for fast LaTeX composition. Built with Electron on top of the [LaTeX Suite Core](https://github.com/QZGao/latex-suite-core) CodeMirror 6 Extension, which is a fork of the popular [Obsidian LaTeX Suite](https://github.com/artisticat1/obsidian-latex-suite).
 
 ## Features
 
