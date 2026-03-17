@@ -7,7 +7,7 @@
     "version:check": "node ./scripts/check-package-versions.mjs",
     "version:bump": "node ./scripts/bump-package-versions.mjs",
     "test:repo": "node --test ./scripts/*.test.mjs",
-    "build:vendor": "npm --prefix vendors/latex-suite-core run build",
+    "build:vendor": "node ./scripts/build-vendor.mjs",
     "build:contracts": "corepack pnpm --filter @latex-suite/contracts build",
     "build:desktop": "corepack pnpm --filter @latex-suite/desktop build",
     "build:dotnet": "dotnet build latex-suite-app.sln",
