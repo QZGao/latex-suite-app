@@ -17,6 +17,7 @@ describe("buildTrayMenuTemplate", () => {
   it("shows the three interaction profiles as radio items", () => {
     const menuTemplate = buildTrayMenuTemplate("selection_replace", {
       onCompose: vi.fn(),
+      onOpenSettings: vi.fn(),
       onQuit: vi.fn(),
       onSelectInteractionProfile: vi.fn()
     });
@@ -51,6 +52,7 @@ describe("buildTrayMenuTemplate", () => {
     const onSelectInteractionProfile = vi.fn();
     const menuTemplate = buildTrayMenuTemplate("insert", {
       onCompose: vi.fn(),
+      onOpenSettings: vi.fn(),
       onQuit: vi.fn(),
       onSelectInteractionProfile
     });
@@ -59,5 +61,20 @@ describe("buildTrayMenuTemplate", () => {
     submenu[2]?.click?.({} as never, {} as never, {} as never);
 
     expect(onSelectInteractionProfile).toHaveBeenCalledWith("auto_selection_replace");
+  });
+
+  it("wires the settings action", () => {
+    const onOpenSettings = vi.fn();
+    const menuTemplate = buildTrayMenuTemplate("insert", {
+      onCompose: vi.fn(),
+      onOpenSettings,
+      onQuit: vi.fn(),
+      onSelectInteractionProfile: vi.fn()
+    });
+
+    const settingsItem = menuTemplate.find((item) => item.label === "Settings...");
+    settingsItem?.click?.({} as never, {} as never, {} as never);
+
+    expect(onOpenSettings).toHaveBeenCalledTimes(1);
   });
 });

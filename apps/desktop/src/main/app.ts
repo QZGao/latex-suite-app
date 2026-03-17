@@ -1,6 +1,10 @@
 import { join } from "node:path";
 import type { AppSettings, InteractionProfileId } from "@latex-suite/contracts";
 import { BridgeClient } from "./bridge-client.js";
+import type {
+  DesktopSettingsSaveResult,
+  UpdateDesktopSettingsPayload
+} from "../shared/settings-payload.js";
 import { app } from "./electron-main.js";
 import { getDesktopWinBridgeLaunchSpec } from "./runtime-paths.js";
 import {
@@ -11,6 +15,7 @@ import {
 } from "./runtime-overrides.js";
 import { SessionController } from "./session-controller.js";
 import { SettingsStore } from "./settings-store.js";
+import { SettingsWindowService } from "./settings-window-service.js";
 import { ShortcutService } from "./shortcut-service.js";
 import { initializeFileLogging, log, logError } from "./logger.js";
 import { TrayService } from "./tray-service.js";
@@ -30,6 +35,13 @@ export class DesktopApp {
   );
   private readonly settingsStore = new SettingsStore();
   private readonly shortcutService = new ShortcutService();
+  private readonly settingsWindowService = new SettingsWindowService({
+    getSettings: () => this.requireSettings(),
+    saveSettings: (payload) => this.saveDesktopSettings(payload),
+    setShortcutCaptureActive: (active) => {
+      this.shortcutService.setCaptureActive(active);
+    }
+  });
   private readonly trayService = new TrayService();
   private settings?: AppSettings;
 
@@ -56,17 +68,27 @@ export class DesktopApp {
     await app.whenReady();
     initializeFileLogging(join(app.getPath("userData"), "logs", "desktop.log"));
     this.settings = this.settingsStore.load();
+    this.applyLaunchAtLoginSetting(this.settings.launchAtLogin);
     app.on("window-all-closed", (event) => {
       event.preventDefault();
     });
 
-    this.shortcutService.register(this.settings.shortcut, () => {
+    const shortcutResult = this.shortcutService.register(this.settings.shortcut, () => {
       this.triggerCompose();
     });
+    if (!shortcutResult.ok) {
+      log("shortcut", "Shortcut registration failed during startup.", {
+        shortcut: this.settings.shortcut,
+        error: shortcutResult.error ?? null
+      });
+    }
     this.trayService.create(
       {
         onCompose: () => {
           this.triggerCompose();
+        },
+        onOpenSettings: () => {
+          this.settingsWindowService.show();
         },
         onQuit: () => {
           app.quit();
@@ -85,12 +107,14 @@ export class DesktopApp {
 
     app.on("will-quit", () => {
       this.shortcutService.dispose();
+      this.settingsWindowService.dispose();
       this.trayService.dispose();
       void this.sessionController.dispose();
     });
 
     log("app", "Desktop shell started.", {
       shortcut: this.settings.shortcut,
+      launchAtLogin: this.settings.launchAtLogin,
       defaultInteractionProfile: this.settings.defaultInteractionProfile
     });
   }
@@ -120,6 +144,94 @@ export class DesktopApp {
 
     log("settings", "Updated default interaction profile.", {
       defaultInteractionProfile: profileId
+    });
+  }
+
+  private saveDesktopSettings(
+    payload: UpdateDesktopSettingsPayload
+  ): DesktopSettingsSaveResult {
+    const previousSettings = this.requireSettings();
+    const shortcutResult =
+      payload.shortcut === previousSettings.shortcut
+        ? {
+            ok: true,
+            shortcut: previousSettings.shortcut
+          }
+        : this.shortcutService.update(payload.shortcut);
+
+    if (!shortcutResult.ok) {
+      return {
+        ok: false,
+        settings: {
+          shortcut: previousSettings.shortcut,
+          launchAtLogin: previousSettings.launchAtLogin,
+          defaultInteractionProfile: previousSettings.defaultInteractionProfile
+        },
+        error: shortcutResult.error
+      };
+    }
+
+    const nextSettings: AppSettings = {
+      ...previousSettings,
+      shortcut: shortcutResult.shortcut,
+      launchAtLogin: payload.launchAtLogin,
+      defaultInteractionProfile: payload.defaultInteractionProfile
+    };
+
+    try {
+      if (nextSettings.launchAtLogin !== previousSettings.launchAtLogin) {
+        this.applyLaunchAtLoginSetting(nextSettings.launchAtLogin);
+      }
+
+      this.settingsStore.save(nextSettings);
+      this.settings = nextSettings;
+      this.trayService.updateInteractionProfile(nextSettings.defaultInteractionProfile);
+    } catch (error) {
+      if (shortcutResult.shortcut !== previousSettings.shortcut) {
+        this.shortcutService.update(previousSettings.shortcut);
+      }
+      if (nextSettings.launchAtLogin !== previousSettings.launchAtLogin) {
+        this.applyLaunchAtLoginSetting(previousSettings.launchAtLogin);
+      }
+      this.settings = previousSettings;
+
+      return {
+        ok: false,
+        settings: {
+          shortcut: previousSettings.shortcut,
+          launchAtLogin: previousSettings.launchAtLogin,
+          defaultInteractionProfile: previousSettings.defaultInteractionProfile
+        },
+        error: error instanceof Error ? error.message : String(error)
+      };
+    }
+
+    log("settings", "Updated desktop settings.", {
+      shortcut: nextSettings.shortcut,
+      launchAtLogin: nextSettings.launchAtLogin,
+      defaultInteractionProfile: nextSettings.defaultInteractionProfile
+    });
+
+    return {
+      ok: true,
+      settings: {
+        shortcut: nextSettings.shortcut,
+        launchAtLogin: nextSettings.launchAtLogin,
+        defaultInteractionProfile: nextSettings.defaultInteractionProfile
+      }
+    };
+  }
+
+  private applyLaunchAtLoginSetting(openAtLogin: boolean): void {
+    if (!app.isPackaged) {
+      log("settings", "Skipping login item change because the app is not packaged.", {
+        openAtLogin
+      });
+      return;
+    }
+
+    app.setLoginItemSettings({
+      openAtLogin
     });
   }
 

@@ -1,9 +1,10 @@
+import { DEFAULT_GLOBAL_SHORTCUT } from "@latex-suite/contracts";
 import { describe, expect, it } from "vitest";
 import { extractAcceleratorModifierKeys } from "./shortcut-utils.js";
 
 describe("extractAcceleratorModifierKeys", () => {
-  it("returns Alt for the default Alt+X trigger", () => {
-    expect(extractAcceleratorModifierKeys("Alt+X")).toEqual(["Alt"]);
+  it("returns Ctrl for the default global shortcut", () => {
+    expect(extractAcceleratorModifierKeys(DEFAULT_GLOBAL_SHORTCUT)).toEqual(["Ctrl"]);
   });
 
   it("returns Ctrl and Shift for multi-modifier accelerators", () => {

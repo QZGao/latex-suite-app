@@ -16,7 +16,7 @@ export default {
   directories: {
     output: "../../artifacts/desktop"
   },
-  files: ["out/**/*", "package.json"],
+  files: ["out/**/*", "package.json", "assets/icon.png"],
   extraResources: [
     {
       from: "../../artifacts/win-bridge/win-x64",
@@ -25,6 +25,7 @@ export default {
     }
   ],
   win: {
+    icon: "assets/icon.ico",
     signAndEditExecutable: shouldEditExecutables,
     verifyUpdateCodeSignature: false,
     target: [

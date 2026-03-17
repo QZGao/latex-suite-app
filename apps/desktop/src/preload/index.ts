@@ -5,6 +5,13 @@ import {
   type ComposerFocusSnapshotPayload,
   type ComposerSessionMountedPayload
 } from "../shared/composer-payload.js";
+import {
+  SETTINGS_IPC_CHANNELS,
+  type DesktopSettingsPayload,
+  type DesktopSettingsSaveResult,
+  type ShortcutCaptureStatePayload,
+  type UpdateDesktopSettingsPayload
+} from "../shared/settings-payload.js";
 import { contextBridge, ipcRenderer } from "./electron-renderer.js";
 
 /**
@@ -35,5 +42,14 @@ contextBridge.exposeInMainWorld("latexSuiteDesktop", {
   },
   discardComposer(): Promise<void> {
     return ipcRenderer.invoke(COMPOSER_IPC_CHANNELS.discard);
+  },
+  getDesktopSettings(): Promise<DesktopSettingsPayload> {
+    return ipcRenderer.invoke(SETTINGS_IPC_CHANNELS.getSettings);
+  },
+  saveDesktopSettings(payload: UpdateDesktopSettingsPayload): Promise<DesktopSettingsSaveResult> {
+    return ipcRenderer.invoke(SETTINGS_IPC_CHANNELS.saveSettings, payload);
+  },
+  setDesktopShortcutCaptureState(payload: ShortcutCaptureStatePayload): void {
+    ipcRenderer.sendSync(SETTINGS_IPC_CHANNELS.setShortcutCaptureState, payload);
   }
 });

@@ -1,22 +1,14 @@
+import { join } from "node:path";
 import {
   type Tray as TrayType
 } from "electron/main";
 import type { InteractionProfileId } from "@latex-suite/contracts";
-import { Menu, Tray, nativeImage } from "./electron-main.js";
+import { app, Menu, Tray, nativeImage } from "./electron-main.js";
 import { buildTrayMenuTemplate, type TrayMenuHandlers } from "./tray-menu.js";
 
 function createTrayIcon() {
   return nativeImage
-    .createFromDataURL(
-      "data:image/svg+xml;utf8," +
-        encodeURIComponent(`
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-            <rect x="3" y="3" width="26" height="26" rx="8" fill="#f5ecdf" stroke="#a9512e" stroke-width="2"/>
-            <path d="M10 22 L16 10 L22 22" fill="none" stroke="#a9512e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M12.5 17.5 H19.5" fill="none" stroke="#a9512e" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-        `)
-    )
+    .createFromPath(join(app.getAppPath(), "assets", "icon.png"))
     .resize({ width: 16, height: 16 });
 }
 

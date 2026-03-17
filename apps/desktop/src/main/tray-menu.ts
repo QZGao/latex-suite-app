@@ -7,6 +7,7 @@ import {
 
 export interface TrayMenuHandlers {
   onCompose: () => void;
+  onOpenSettings: () => void;
   onQuit: () => void;
   onSelectInteractionProfile: (profileId: InteractionProfileId) => void;
 }
@@ -41,6 +42,13 @@ export function buildTrayMenuTemplate(
     {
       label: "Mode",
       submenu: interactionProfileMenuItems
+    },
+    {
+      type: "separator"
+    },
+    {
+      label: "Settings...",
+      click: handlers.onOpenSettings
     },
     {
       type: "separator"

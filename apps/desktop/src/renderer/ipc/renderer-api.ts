@@ -1,9 +1,18 @@
+import {
+  DEFAULT_APP_SETTINGS
+} from "@latex-suite/contracts";
 import type {
   ComposerBootstrapPayload,
   ComposerCommitPayload,
   ComposerFocusSnapshotPayload,
   ComposerSessionMountedPayload
 } from "../../shared/composer-payload.js";
+import type {
+  DesktopSettingsPayload,
+  DesktopSettingsSaveResult,
+  ShortcutCaptureStatePayload,
+  UpdateDesktopSettingsPayload
+} from "../../shared/settings-payload.js";
 
 export interface DesktopRendererApi {
   getComposerBootstrap(): Promise<ComposerBootstrapPayload | null>;
@@ -12,6 +21,9 @@ export interface DesktopRendererApi {
   notifyComposerMounted(payload: ComposerSessionMountedPayload): void;
   notifyComposerFocusSnapshot(payload: ComposerFocusSnapshotPayload): void;
   discardComposer(): Promise<void>;
+  getDesktopSettings(): Promise<DesktopSettingsPayload>;
+  saveDesktopSettings(payload: UpdateDesktopSettingsPayload): Promise<DesktopSettingsSaveResult>;
+  setDesktopShortcutCaptureState(payload: ShortcutCaptureStatePayload): void;
 }
 
 declare global {
@@ -44,7 +56,27 @@ const fallbackApi: DesktopRendererApi = {
   async commitComposer(): Promise<void> {},
   notifyComposerMounted(): void {},
   notifyComposerFocusSnapshot(): void {},
-  async discardComposer(): Promise<void> {}
+  async discardComposer(): Promise<void> {},
+  async getDesktopSettings(): Promise<DesktopSettingsPayload> {
+    return {
+      shortcut: DEFAULT_APP_SETTINGS.shortcut,
+      launchAtLogin: false,
+      defaultInteractionProfile: DEFAULT_APP_SETTINGS.defaultInteractionProfile
+    };
+  },
+  async saveDesktopSettings(
+    payload: UpdateDesktopSettingsPayload
+  ): Promise<DesktopSettingsSaveResult> {
+    return {
+      ok: true,
+      settings: {
+        shortcut: payload.shortcut,
+        launchAtLogin: payload.launchAtLogin,
+        defaultInteractionProfile: payload.defaultInteractionProfile
+      }
+    };
+  },
+  setDesktopShortcutCaptureState(): void {}
 };
 
 let hasWarnedAboutMissingPreloadApi = false;
