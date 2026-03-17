@@ -1,6 +1,6 @@
 ![LaTeX Suite desktop app icon](./apps/desktop/assets/icon.svg)
 
-# LaTeX Suite desktop app ![test workflow badge](https://github.com/QZGao/latex-suite-app/actions/workflows/test.yml/badge.svg)
+# LaTeX Suite desktop app ![package version](https://img.shields.io/github/package-json/v/QZGao/latex-suite-app) ![test workflow badge](https://github.com/QZGao/latex-suite-app/actions/workflows/test.yml/badge.svg)
 
 Lightweight Windows app for fast LaTeX composition. Built with Electron on top of the [LaTeX Suite Core](https://github.com/QZGao/latex-suite-core) CodeMirror 6 Extension, which is a fork of the popular [Obsidian LaTeX Suite](https://github.com/artisticat1/obsidian-latex-suite).
 
