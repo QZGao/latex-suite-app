@@ -1,7 +1,7 @@
 {
   "name": "latex-suite-app",
   "private": true,
-  "version": "0.1.3",
+  "version": "0.1.4",
   "packageManager": "pnpm@10.32.1",
   "scripts": {
     "version:check": "node ./scripts/check-package-versions.mjs",
