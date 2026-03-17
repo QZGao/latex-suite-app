@@ -24,12 +24,13 @@ interface ActiveComposeSession extends ComposeSession {
  * Owns the popup lifecycle and all host interaction for one active session.
  */
 export class SessionController {
-  private readonly bridgeClient = new BridgeClient();
+  private readonly bridgeClient: BridgeClient;
   private activeSession?: ActiveComposeSession;
   private bootstrapPayload?: ComposerBootstrapPayload;
   private popupWindow?: BrowserWindow;
 
-  constructor() {
+  constructor(bridgeClient: BridgeClient = new BridgeClient()) {
+    this.bridgeClient = bridgeClient;
     ipcMain.handle(COMPOSER_IPC_CHANNELS.getBootstrap, () => this.getBootstrapPayload());
     ipcMain.handle(COMPOSER_IPC_CHANNELS.commit, (_event, payload: ComposerCommitPayload) =>
       this.commit(payload)

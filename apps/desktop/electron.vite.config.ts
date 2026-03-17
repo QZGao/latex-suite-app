@@ -3,7 +3,11 @@ import { resolve } from "node:path";
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin()],
+    plugins: [
+      externalizeDepsPlugin({
+        exclude: ["@latex-suite/contracts"]
+      })
+    ],
     resolve: {
       alias: {
         "@": resolve(__dirname, "src")
@@ -11,7 +15,11 @@ export default defineConfig({
     }
   },
   preload: {
-    plugins: [externalizeDepsPlugin()],
+    plugins: [
+      externalizeDepsPlugin({
+        exclude: ["@latex-suite/contracts"]
+      })
+    ],
     resolve: {
       alias: {
         "@": resolve(__dirname, "src")

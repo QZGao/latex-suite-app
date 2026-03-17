@@ -1,4 +1,6 @@
 import { app } from "electron";
+import { BridgeClient } from "./bridge-client.js";
+import { getDesktopWinBridgeLaunchSpec } from "./runtime-paths.js";
 import { SessionController } from "./session-controller.js";
 import { SettingsStore } from "./settings-store.js";
 import { ShortcutService } from "./shortcut-service.js";
@@ -10,7 +12,14 @@ import { TrayService } from "./tray-service.js";
  * keep behavior in the services.
  */
 export class DesktopApp {
-  private readonly sessionController = new SessionController();
+  private readonly sessionController = new SessionController(
+    new BridgeClient(
+      getDesktopWinBridgeLaunchSpec({
+        isPackaged: app.isPackaged,
+        resourcesPath: process.resourcesPath
+      })
+    )
+  );
   private readonly settingsStore = new SettingsStore();
   private readonly shortcutService = new ShortcutService();
   private readonly trayService = new TrayService();
