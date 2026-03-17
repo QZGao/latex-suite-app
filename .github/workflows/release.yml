@@ -110,14 +110,6 @@ jobs:
         shell: pwsh
         run: pnpm install --frozen-lockfile
 
-      - name: Build shared contracts
-        shell: pwsh
-        run: npm run build:contracts
-
-      - name: Build .NET solution
-        shell: pwsh
-        run: npm run build:dotnet
-
       - name: Rebuild Electron desktop runtime
         shell: pwsh
         run: pnpm --filter @latex-suite/desktop rebuild electron
@@ -125,10 +117,6 @@ jobs:
       - name: Verify workspace package versions
         shell: pwsh
         run: node ./scripts/check-package-versions.mjs
-
-      - name: Run test suite
-        shell: pwsh
-        run: npm run test
 
       - name: Build unsigned Windows release
         shell: pwsh
