@@ -110,6 +110,18 @@ jobs:
         shell: pwsh
         run: pnpm install --frozen-lockfile
 
+      - name: Build shared contracts
+        shell: pwsh
+        run: npm run build:contracts
+
+      - name: Build .NET solution
+        shell: pwsh
+        run: npm run build:dotnet
+
+      - name: Rebuild Electron desktop runtime
+        shell: pwsh
+        run: pnpm --filter @latex-suite/desktop rebuild electron
+
       - name: Verify workspace package versions
         shell: pwsh
         run: node ./scripts/check-package-versions.mjs
@@ -135,7 +147,7 @@ jobs:
       - name: Publish GitHub release
         shell: pwsh
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.AUTOMATION_GITHUB_TOKEN }}
           GITHUB_SHA: ${{ github.sha }}
         run: |
           $artifacts = @(
