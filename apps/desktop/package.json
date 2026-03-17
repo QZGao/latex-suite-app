@@ -1,7 +1,7 @@
 {
   "name": "@latex-suite/desktop",
   "private": true,
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "IME-like LaTeX composer for Windows.",
   "author": "latex-suite-app contributors",
   "main": "out/main/index.js",
