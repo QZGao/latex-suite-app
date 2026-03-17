@@ -21,10 +21,8 @@ export interface ComposeSession {
   id: string;
   phase: SessionPhase;
   interactionProfileId: InteractionProfileId;
-  hostAdapterId: string;
   source: HostContext;
   originalClipboardText?: string;
   importedText: string;
   editedText: string;
-  shouldFinalizeHost: boolean;
 }

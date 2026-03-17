@@ -28,10 +28,6 @@ export class SettingsStore {
         snippets: {
           ...DEFAULT_APP_SETTINGS.snippets,
           ...(parsed.snippets ?? {})
-        },
-        adapters: {
-          ...DEFAULT_APP_SETTINGS.adapters,
-          ...(parsed.adapters ?? {})
         }
       };
     } catch (error) {

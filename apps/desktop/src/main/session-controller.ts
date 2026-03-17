@@ -11,22 +11,14 @@ import {
 } from "../shared/composer-payload.js";
 import { BridgeClient } from "./bridge-client.js";
 import { BrowserWindow, ipcMain } from "./electron-main.js";
-import {
-  resolveHostAdapter,
-  type HostAdapterWithMatcher
-} from "./integration/host-adapter-resolver.js";
 import { log, logError } from "./logger.js";
 import { formatNativeWindowHandle } from "./native-window-handle.js";
 import { schedulePopupBootstrapDelivery } from "./popup-bootstrap.js";
 import { createPopupWindow, positionPopupWindow, showPopupWindow } from "./popup-window.js";
-import { resolveCommitPlan, resolveImportKeys, resolveInteractionProfileId } from "./session-plan.js";
+import { resolveCommitPlan, resolveImportKeys } from "./session-plan.js";
 import { extractAcceleratorModifierKeys } from "./shortcut-utils.js";
 import { readOptionalTextFile } from "./text-file-utils.js";
 import { waitForClipboardCapture } from "./clipboard-probe.js";
-
-interface ActiveComposeSession extends ComposeSession {
-  hostAdapter: HostAdapterWithMatcher;
-}
 
 const POPUP_FOCUS_DIAGNOSTIC_DELAYS_MS = [0, 30, 90, 180, 320] as const;
 
@@ -41,7 +33,7 @@ function sleep(ms: number): Promise<void> {
  */
 export class SessionController {
   private readonly bridgeClient: BridgeClient;
-  private activeSession?: ActiveComposeSession;
+  private activeSession?: ComposeSession;
   private bootstrapPayload?: ComposerBootstrapPayload;
   private mountedSessionId?: string;
   private popupWindow?: BrowserWindowType;
@@ -80,21 +72,13 @@ export class SessionController {
       return;
     }
 
-    const hostAdapter = resolveHostAdapter(source);
-    const interactionProfileId = resolveInteractionProfileId(
-      hostAdapter,
-      settings.defaultInteractionProfile
-    );
+    const interactionProfileId = settings.defaultInteractionProfile;
     const popupWindow = this.ensurePopupWindow(settings);
     positionPopupWindow(popupWindow, settings.popup, source.bounds);
 
     const originalClipboardText = await this.bridgeClient.readClipboardText();
     const importStartedAt = performance.now();
-    const importedText = await this.captureImportedText(
-      interactionProfileId,
-      hostAdapter,
-      triggerModifierKeys
-    );
+    const importedText = await this.captureImportedText(interactionProfileId, triggerModifierKeys);
     const importDurationMs = Math.round(performance.now() - importStartedAt);
 
     await this.waitForTriggerModifiersToRelease(triggerModifierKeys, interactionProfileId, "popup", 180);
@@ -103,13 +87,10 @@ export class SessionController {
       id: randomUUID(),
       phase: "editing",
       interactionProfileId,
-      hostAdapterId: hostAdapter.id,
-      hostAdapter,
       source,
       originalClipboardText,
       importedText,
-      editedText: importedText,
-      shouldFinalizeHost: (hostAdapter.postCommitKeys?.length ?? 0) > 0
+      editedText: importedText
     };
 
     this.bootstrapPayload = {
@@ -125,7 +106,6 @@ export class SessionController {
     this.mountedSessionId = undefined;
 
     log("session", "Session captured.", {
-      hostAdapterId: hostAdapter.id,
       interactionProfileId,
       importedTextLength: importedText.length,
       importedTextEndsWithNewline:
@@ -225,11 +205,10 @@ export class SessionController {
   }
 
   private async captureImportedText(
-    interactionProfileId: ActiveComposeSession["interactionProfileId"],
-    hostAdapter: HostAdapterWithMatcher,
+    interactionProfileId: ComposeSession["interactionProfileId"],
     triggerModifierKeys: string[]
   ): Promise<string> {
-    const importKeys = resolveImportKeys(interactionProfileId, hostAdapter);
+    const importKeys = resolveImportKeys(interactionProfileId);
     if (importKeys.length === 0) {
       return "";
     }
@@ -265,7 +244,7 @@ export class SessionController {
   }
 
   private async performImportProbe(
-    interactionProfileId: ActiveComposeSession["interactionProfileId"],
+    interactionProfileId: ComposeSession["interactionProfileId"],
     importKeys: string[],
     attempt: "initial" | "retry"
   ): Promise<string> {
@@ -302,7 +281,7 @@ export class SessionController {
 
   private async waitForTriggerModifiersToRelease(
     triggerModifierKeys: string[],
-    interactionProfileId: ActiveComposeSession["interactionProfileId"],
+    interactionProfileId: ComposeSession["interactionProfileId"],
     phase: "import" | "popup",
     timeoutMs: number
   ): Promise<{
@@ -351,14 +330,10 @@ export class SessionController {
         throw new Error("Failed to restore focus to the original host window.");
       }
 
-      const commitPlan = resolveCommitPlan(
-        session.interactionProfileId,
-        session.hostAdapter,
-        {
-          hasText: payload.text.length > 0,
-          hadImportedText: session.importedText.length > 0
-        }
-      );
+      const commitPlan = resolveCommitPlan(session.interactionProfileId, {
+        hasText: payload.text.length > 0,
+        hadImportedText: session.importedText.length > 0
+      });
 
       if (payload.text.length > 0) {
         await this.bridgeClient.writeClipboardText({ text: payload.text });
@@ -366,10 +341,6 @@ export class SessionController {
       }
 
       await this.sendKeySequence(commitPlan.commitKeys, 18, 30);
-
-      if (commitPlan.postCommitKeys.length > 0) {
-        await this.sendKeySequence(commitPlan.postCommitKeys, 18, 30);
-      }
 
       shouldRestoreOriginalClipboard = true;
 

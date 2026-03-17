@@ -17,9 +17,6 @@ export interface AppSettings {
     userSnippetFile?: string;
     userVariableFile?: string;
   };
-  adapters: {
-    enabledAdapterIds: string[];
-  };
 }
 
 /**
@@ -36,8 +33,5 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   },
   snippets: {
     builtInEnabled: true
-  },
-  adapters: {
-    enabledAdapterIds: ["generic", "notion-formula"]
   }
 };

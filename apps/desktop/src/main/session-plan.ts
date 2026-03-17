@@ -1,11 +1,7 @@
-import type {
-  HostAdapterDefinition,
-  InteractionProfileId
-} from "@latex-suite/contracts";
+import type { InteractionProfileId } from "@latex-suite/contracts";
 
 export interface SessionCommitPlan {
   commitKeys: string[];
-  postCommitKeys: string[];
 }
 
 export interface ResolveCommitPlanOptions {
@@ -13,25 +9,7 @@ export interface ResolveCommitPlanOptions {
   hadImportedText?: boolean;
 }
 
-/**
- * The tray-selected profile is an explicit user choice and should not be
- * silently overridden by adapters. Adapter preferences remain useful for future
- * heuristics, but not for a forced user-selected mode.
- */
-export function resolveInteractionProfileId(
-  _adapter: HostAdapterDefinition,
-  defaultProfileId: InteractionProfileId
-): InteractionProfileId {
-  return defaultProfileId;
-}
-
-/**
- * Returns the capture key sequence for the effective interaction profile.
- */
-export function resolveImportKeys(
-  profileId: InteractionProfileId,
-  adapter: HostAdapterDefinition
-): string[] {
+export function resolveImportKeys(profileId: InteractionProfileId): string[] {
   if (profileId === "insert") {
     return [];
   }
@@ -40,15 +18,7 @@ export function resolveImportKeys(
     return ["Ctrl+C"];
   }
 
-  if (adapter.captureBehavior === "select_all_copy") {
-    return ["Ctrl+A", "Ctrl+C"];
-  }
-
-  if (adapter.captureBehavior === "selection_probe") {
-    return ["Ctrl+C"];
-  }
-
-  return [];
+  return ["Ctrl+A", "Ctrl+C"];
 }
 
 /**
@@ -56,56 +26,39 @@ export function resolveImportKeys(
  */
 export function resolveCommitPlan(
   profileId: InteractionProfileId,
-  adapter: HostAdapterDefinition,
   options: ResolveCommitPlanOptions = { hasText: true }
 ): SessionCommitPlan {
   if (!options.hasText) {
     if (profileId === "insert") {
       return {
-        commitKeys: [],
-        postCommitKeys: []
+        commitKeys: []
       };
     }
 
     if (profileId === "selection_replace" && options.hadImportedText === false) {
       return {
-        commitKeys: [],
-        postCommitKeys: []
+        commitKeys: []
       };
     }
 
-    if (profileId === "auto_selection_replace" && adapter.commitBehavior === "select_all_paste") {
+    if (profileId === "auto_selection_replace") {
       return {
-        commitKeys: ["Ctrl+A", "Delete"],
-        postCommitKeys: adapter.postCommitKeys ?? []
+        commitKeys: ["Ctrl+A", "Delete"]
       };
     }
 
     return {
-      commitKeys: ["Delete"],
-      postCommitKeys: profileId === "auto_selection_replace" ? adapter.postCommitKeys ?? [] : []
+      commitKeys: ["Delete"]
     };
   }
 
   if (profileId === "auto_selection_replace") {
     return {
-      commitKeys:
-        adapter.commitBehavior === "select_all_paste"
-          ? ["Ctrl+A", "Ctrl+V"]
-          : ["Ctrl+V"],
-      postCommitKeys: adapter.postCommitKeys ?? []
-    };
-  }
-
-  if (profileId === "selection_replace") {
-    return {
-      commitKeys: ["Ctrl+V"],
-      postCommitKeys: []
+      commitKeys: ["Ctrl+A", "Ctrl+V"]
     };
   }
 
   return {
-    commitKeys: ["Ctrl+V"],
-    postCommitKeys: []
+    commitKeys: ["Ctrl+V"]
   };
 }

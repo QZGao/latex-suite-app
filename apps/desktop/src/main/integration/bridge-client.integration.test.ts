@@ -19,8 +19,6 @@ interface FixtureLaunchOptions {
   selectionStart: number;
   selectionLength: number;
   expectText?: string;
-  expectEnterCount?: number;
-  closeOnEnter?: boolean;
   exitOnMatch?: boolean;
 }
 
@@ -38,7 +36,6 @@ interface AutoSelectionReplaceCase {
   initialText: string;
   replacementText: string;
   expectedText: string;
-  expectedEnterCount?: number;
   selectionStart?: number;
   selectionLength?: number;
 }
@@ -79,16 +76,8 @@ function createFixtureLaunchSpec(options: FixtureLaunchOptions): ReturnType<type
     args.push("--expect-text", options.expectText);
   }
 
-  if (options.expectEnterCount !== undefined) {
-    args.push("--expect-enter-count", String(options.expectEnterCount));
-  }
-
   if (options.exitOnMatch) {
     args.push("--exit-on-match");
-  }
-
-  if (options.closeOnEnter) {
-    args.push("--close-on-enter");
   }
 
   return getHostFixtureLaunchSpec(args);
@@ -190,9 +179,7 @@ async function runAutoSelectionReplaceCase(
       selectionStart: options.selectionStart ?? 0,
       selectionLength: options.selectionLength ?? options.initialText.length,
       expectText: options.expectedText,
-      expectEnterCount: options.expectedEnterCount ?? 1,
-      exitOnMatch: true,
-      closeOnEnter: true
+      exitOnMatch: true
     },
     async (fixture, ready) => {
       await ensureForegroundHost(bridge, ready.handle);
@@ -206,12 +193,11 @@ async function runAutoSelectionReplaceCase(
       await bridge.writeClipboardText({ text: options.replacementText });
       await ensureForegroundHost(bridge, ready.handle);
       await sendKeySequence(bridge, ["Ctrl+A", "Ctrl+V"]);
-      await sendKeySequence(bridge, ["Enter"]);
 
       const result = await fixture.nextJsonLine<FixtureSnapshot>(10_000);
       expect(result.status, result.error ?? JSON.stringify(result)).toBe("passed");
       expect(result.text).toBe(options.expectedText);
-      expect(result.enterCount).toBeGreaterThanOrEqual(options.expectedEnterCount ?? 1);
+      expect(result.enterCount).toBe(0);
       assertDuration();
       await expect(fixture.waitForExit(10_000)).resolves.toBe(0);
     }
@@ -375,7 +361,7 @@ describe.sequential("native bridge integration", () => {
     }
   }, 30_000);
 
-  it("supports adapter-style select-all replace followed by Enter finalization", async () => {
+  it("supports select-all replace without trailing Enter", async () => {
     await runAutoSelectionReplaceCase(bridge, {
       label: "auto selection bridge round trip",
       initialText: "x+y",

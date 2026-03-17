@@ -10,7 +10,7 @@ export type InteractionProfileId =
 /**
  * How the session should import text into the popup.
  */
-export type ImportStrategy = "none" | "selection_probe" | "adapter_driven";
+export type ImportStrategy = "none" | "selection_probe" | "select_all_copy";
 
 /**
  * How the session should commit text back to the host.
@@ -18,7 +18,7 @@ export type ImportStrategy = "none" | "selection_probe" | "adapter_driven";
 export type CommitBehavior =
   | "paste_at_caret"
   | "paste_over_selection"
-  | "adapter_driven";
+  | "select_all_paste";
 
 /**
  * Immutable definition of one interaction profile.
@@ -59,7 +59,7 @@ export const INTERACTION_PROFILES: Record<InteractionProfileId, InteractionProfi
   auto_selection_replace: {
     id: "auto_selection_replace",
     label: "Auto Selection Replace",
-    importStrategy: "adapter_driven",
-    commitBehavior: "adapter_driven"
+    importStrategy: "select_all_copy",
+    commitBehavior: "select_all_paste"
   }
 };
