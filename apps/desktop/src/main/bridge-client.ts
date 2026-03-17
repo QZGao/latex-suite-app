@@ -9,6 +9,8 @@ import {
   type RestoreFocusResult,
   type SendKeysParams,
   type SendKeysResult,
+  type WaitForKeysReleasedParams,
+  type WaitForKeysReleasedResult,
   type WriteClipboardTextParams
 } from "@latex-suite/contracts";
 import { log, logError } from "./logger.js";
@@ -40,7 +42,8 @@ export class BridgeClient {
 
     const child = spawn(this.launchSpec.command, this.launchSpec.args, {
       cwd: this.launchSpec.cwd,
-      stdio: ["pipe", "pipe", "pipe"]
+      stdio: ["pipe", "pipe", "pipe"],
+      windowsHide: true
     });
     this.isDisposing = false;
 
@@ -110,6 +113,12 @@ export class BridgeClient {
 
   async sendKeys(params: SendKeysParams): Promise<SendKeysResult> {
     return this.request("sendKeys", params);
+  }
+
+  async waitForKeysReleased(
+    params: WaitForKeysReleasedParams
+  ): Promise<WaitForKeysReleasedResult> {
+    return this.request("waitForKeysReleased", params);
   }
 
   private async request<TResult>(

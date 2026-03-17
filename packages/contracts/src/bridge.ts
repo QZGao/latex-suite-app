@@ -9,7 +9,8 @@ export type BridgeMethod =
   | "restoreFocus"
   | "readClipboardText"
   | "writeClipboardText"
-  | "sendKeys";
+  | "sendKeys"
+  | "waitForKeysReleased";
 
 export interface BridgeRequest<TMethod extends BridgeMethod = BridgeMethod, TParams = unknown> {
   id: string;
@@ -34,6 +35,12 @@ export interface SendKeysParams {
   settleDelayMs?: number;
 }
 
+export interface WaitForKeysReleasedParams {
+  keys: string[];
+  timeoutMs?: number;
+  pollIntervalMs?: number;
+}
+
 export interface RestoreFocusParams {
   hwnd: string;
 }
@@ -46,6 +53,11 @@ export interface RestoreFocusResult {
 
 export interface SendKeysResult {
   sent: string[];
+}
+
+export interface WaitForKeysReleasedResult {
+  released: boolean;
+  remainingKeys: string[];
 }
 
 export interface WriteClipboardTextParams {

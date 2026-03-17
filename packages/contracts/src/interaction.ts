@@ -31,6 +31,15 @@ export interface InteractionProfile {
 }
 
 /**
+ * Stable display order for every user-facing interaction profile selector.
+ */
+export const INTERACTION_PROFILE_ORDER: InteractionProfileId[] = [
+  "insert",
+  "selection_replace",
+  "auto_selection_replace"
+];
+
+/**
  * Fixed interaction profile table. The implementation can import this
  * everywhere without inventing a registry.
  */

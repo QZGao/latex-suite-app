@@ -1,7 +1,7 @@
-import { app } from "electron";
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { DEFAULT_APP_SETTINGS, type AppSettings } from "@latex-suite/contracts";
+import { app } from "./electron-main.js";
 import { logError } from "./logger.js";
 
 function getSettingsPath(): string {

@@ -1,7 +1,7 @@
 import type { ComposerBootstrapPayload } from "../../shared/composer-payload.js";
 
 export interface ComposerBootstrapSource {
-  getComposerBootstrap(): Promise<ComposerBootstrapPayload>;
+  getComposerBootstrap(): Promise<ComposerBootstrapPayload | null>;
   onComposerBootstrap(listener: (payload: ComposerBootstrapPayload) => void): () => void;
 }
 
@@ -23,8 +23,14 @@ export async function startComposerRuntime(
 ): Promise<ComposerSessionCleanup> {
   let activeCleanup: ComposerSessionCleanup = () => {};
   let mountGeneration = 0;
+  let activeSessionId: string | undefined;
 
   const activateSession = async (bootstrap: ComposerBootstrapPayload): Promise<void> => {
+    if (bootstrap.sessionId === activeSessionId) {
+      return;
+    }
+
+    activeSessionId = bootstrap.sessionId;
     const generation = ++mountGeneration;
 
     activeCleanup();
@@ -43,10 +49,14 @@ export async function startComposerRuntime(
     void activateSession(bootstrap);
   });
 
-  await activateSession(await source.getComposerBootstrap());
+  const initialBootstrap = await source.getComposerBootstrap();
+  if (initialBootstrap) {
+    await activateSession(initialBootstrap);
+  }
 
   return () => {
     mountGeneration++;
+    activeSessionId = undefined;
     unsubscribe();
     activeCleanup();
     activeCleanup = () => {};

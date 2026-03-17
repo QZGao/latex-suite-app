@@ -13,6 +13,7 @@ internal sealed class BridgeDispatcher
     private readonly FocusService focusService = new();
     private readonly ForegroundWindowService foregroundWindowService = new();
     private readonly InputService inputService = new();
+    private readonly KeyboardStateService keyboardStateService = new();
 
     public BridgeResponseEnvelope Dispatch(BridgeRequestEnvelope request)
     {
@@ -26,6 +27,7 @@ internal sealed class BridgeDispatcher
                 "readClipboardText" => Ok(request.Id, clipboardService.ReadText()),
                 "writeClipboardText" => HandleWriteClipboardText(request),
                 "sendKeys" => HandleSendKeys(request),
+                "waitForKeysReleased" => HandleWaitForKeysReleased(request),
                 _ => Error(request.Id, $"Unknown bridge method '{request.Method}'.")
             };
         }
@@ -58,6 +60,17 @@ internal sealed class BridgeDispatcher
             parameters.SettleDelayMs.GetValueOrDefault(40));
 
         return Ok(request.Id, new SendKeysResult { Sent = parameters.Keys });
+    }
+
+    private BridgeResponseEnvelope HandleWaitForKeysReleased(BridgeRequestEnvelope request)
+    {
+        var parameters = DeserializeParams<WaitForKeysReleasedParams>(request);
+        var result = keyboardStateService.WaitForKeysReleased(
+            parameters.Keys,
+            parameters.TimeoutMs.GetValueOrDefault(500),
+            parameters.PollIntervalMs.GetValueOrDefault(10));
+
+        return Ok(request.Id, result);
     }
 
     private static T DeserializeParams<T>(BridgeRequestEnvelope request)

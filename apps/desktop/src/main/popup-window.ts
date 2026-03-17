@@ -1,11 +1,25 @@
-import { BrowserWindow, screen } from "electron";
+import type { BrowserWindow as BrowserWindowType } from "electron/main";
 import { join } from "node:path";
 import type { AppSettings, HostBounds } from "@latex-suite/contracts";
+import { BrowserWindow, screen } from "./electron-main.js";
 import { computePopupBounds } from "./popup-placement.js";
 import { log, logError } from "./logger.js";
+import { showPopupWindowWithScheduler } from "./popup-focus.js";
 import { resolvePreloadEntryPath } from "./popup-runtime-utils.js";
 
 function attachPopupDiagnostics(window: BrowserWindow): void {
+  window.on("show", () => {
+    log("popup", "Popup window shown.");
+  });
+
+  window.on("focus", () => {
+    log("popup", "Popup window focused.");
+  });
+
+  window.on("blur", () => {
+    log("popup", "Popup window blurred.");
+  });
+
   window.webContents.on("did-fail-load", (_event, errorCode, errorDescription, validatedUrl) => {
     logError("popup", "Popup renderer failed to load.", {
       errorCode,
@@ -39,7 +53,7 @@ function attachPopupDiagnostics(window: BrowserWindow): void {
  */
 export function createPopupWindow(
   popupSettings: AppSettings["popup"]
-): BrowserWindow {
+): BrowserWindowType {
   const preloadPath = resolvePreloadEntryPath(__dirname);
   const window = new BrowserWindow({
     width: popupSettings.width,
@@ -48,9 +62,11 @@ export function createPopupWindow(
     minHeight: popupSettings.minHeight,
     show: false,
     frame: false,
+    title: "LaTeX Suite Composer",
     titleBarStyle: "hidden",
     autoHideMenuBar: true,
     alwaysOnTop: true,
+    skipTaskbar: true,
     resizable: false,
     fullscreenable: false,
     backgroundColor: "#fffaf2",
@@ -72,8 +88,19 @@ export function createPopupWindow(
   return window;
 }
 
+/**
+ * Shows the popup and aggressively reapplies focus on the next tick. This
+ * keeps the frameless window from ending up merely visible while the host keeps
+ * keyboard focus.
+ */
+export function showPopupWindow(window: BrowserWindow): void {
+  showPopupWindowWithScheduler(window, undefined, (message, payload) => {
+    log("popup", message, payload);
+  });
+}
+
 export function positionPopupWindow(
-  window: BrowserWindow,
+  window: BrowserWindowType,
   popupSettings: AppSettings["popup"],
   sourceBounds: HostBounds
 ): void {

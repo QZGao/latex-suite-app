@@ -56,6 +56,15 @@ export default defineConfig({
         exclude: ["@latex-suite/contracts"]
       })
     ],
+    build: {
+      rollupOptions: {
+        output: {
+          format: "cjs",
+          entryFileNames: "[name].js",
+          chunkFileNames: "chunks/[name]-[hash].js"
+        }
+      }
+    },
     resolve: createResolveConfig()
   },
   preload: {

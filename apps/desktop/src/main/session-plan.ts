@@ -8,18 +8,20 @@ export interface SessionCommitPlan {
   postCommitKeys: string[];
 }
 
+export interface ResolveCommitPlanOptions {
+  hasText: boolean;
+  hadImportedText?: boolean;
+}
+
 /**
- * Adapter-specific profile preferences only apply to specific hosts, not the
- * generic fallback.
+ * The tray-selected profile is an explicit user choice and should not be
+ * silently overridden by adapters. Adapter preferences remain useful for future
+ * heuristics, but not for a forced user-selected mode.
  */
 export function resolveInteractionProfileId(
-  adapter: HostAdapterDefinition,
+  _adapter: HostAdapterDefinition,
   defaultProfileId: InteractionProfileId
 ): InteractionProfileId {
-  if (adapter.id !== "generic" && adapter.preferredProfile) {
-    return adapter.preferredProfile;
-  }
-
   return defaultProfileId;
 }
 
@@ -54,8 +56,37 @@ export function resolveImportKeys(
  */
 export function resolveCommitPlan(
   profileId: InteractionProfileId,
-  adapter: HostAdapterDefinition
+  adapter: HostAdapterDefinition,
+  options: ResolveCommitPlanOptions = { hasText: true }
 ): SessionCommitPlan {
+  if (!options.hasText) {
+    if (profileId === "insert") {
+      return {
+        commitKeys: [],
+        postCommitKeys: []
+      };
+    }
+
+    if (profileId === "selection_replace" && options.hadImportedText === false) {
+      return {
+        commitKeys: [],
+        postCommitKeys: []
+      };
+    }
+
+    if (profileId === "auto_selection_replace" && adapter.commitBehavior === "select_all_paste") {
+      return {
+        commitKeys: ["Ctrl+A", "Delete"],
+        postCommitKeys: adapter.postCommitKeys ?? []
+      };
+    }
+
+    return {
+      commitKeys: ["Delete"],
+      postCommitKeys: profileId === "auto_selection_replace" ? adapter.postCommitKeys ?? [] : []
+    };
+  }
+
   if (profileId === "auto_selection_replace") {
     return {
       commitKeys:

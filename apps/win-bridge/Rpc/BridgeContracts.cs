@@ -59,10 +59,31 @@ internal sealed class SendKeysParams
     public int? SettleDelayMs { get; init; }
 }
 
+internal sealed class WaitForKeysReleasedParams
+{
+    [JsonPropertyName("keys")]
+    public required string[] Keys { get; init; }
+
+    [JsonPropertyName("timeoutMs")]
+    public int? TimeoutMs { get; init; }
+
+    [JsonPropertyName("pollIntervalMs")]
+    public int? PollIntervalMs { get; init; }
+}
+
 internal sealed class SendKeysResult
 {
     [JsonPropertyName("sent")]
     public required string[] Sent { get; init; }
+}
+
+internal sealed class WaitForKeysReleasedResult
+{
+    [JsonPropertyName("released")]
+    public required bool Released { get; init; }
+
+    [JsonPropertyName("remainingKeys")]
+    public required string[] RemainingKeys { get; init; }
 }
 
 internal sealed class WriteClipboardTextParams

@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import {
+  findPortableDesktopExecutableName,
   getDesktopWinBridgeLaunchSpec,
+  getDevelopmentDesktopLaunchSpec,
   getPackagedWinBridgeLaunchSpec
 } from "./runtime-paths.js";
 
@@ -63,6 +65,26 @@ describe("runtime path resolution", () => {
 
     expect(() => getPackagedWinBridgeLaunchSpec(resourcesPath)).toThrow(
       /Missing packaged bridge executable\. Run the release packaging pipeline first/
+    );
+  });
+
+  it("resolves the development desktop launch spec through the local Electron shim", () => {
+    const launchSpec = getDevelopmentDesktopLaunchSpec(["--trace-warnings"]);
+
+    expect(launchSpec.command).toMatch(
+      /apps[\\/]+desktop[\\/]+node_modules[\\/]+electron[\\/]+dist[\\/]+electron\.exe$/i
+    );
+    expect(launchSpec.args).toEqual([".", "--trace-warnings"]);
+    expect(launchSpec.cwd).toMatch(/apps[\\/]+desktop$/i);
+  });
+
+  it("finds the packaged portable desktop executable by name", () => {
+    const artifactsDirectory = createTempResourcesPath();
+    writeFileSync(join(artifactsDirectory, "LaTeX Suite Setup 9.9.9.exe"), "");
+    writeFileSync(join(artifactsDirectory, "LaTeX Suite 9.9.9.exe"), "");
+
+    expect(findPortableDesktopExecutableName(artifactsDirectory)).toBe(
+      "LaTeX Suite 9.9.9.exe"
     );
   });
 });

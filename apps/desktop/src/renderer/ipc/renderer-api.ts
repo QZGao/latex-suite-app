@@ -1,12 +1,16 @@
 import type {
   ComposerBootstrapPayload,
-  ComposerCommitPayload
+  ComposerCommitPayload,
+  ComposerFocusSnapshotPayload,
+  ComposerSessionMountedPayload
 } from "../../shared/composer-payload.js";
 
 export interface DesktopRendererApi {
-  getComposerBootstrap(): Promise<ComposerBootstrapPayload>;
+  getComposerBootstrap(): Promise<ComposerBootstrapPayload | null>;
   onComposerBootstrap(listener: (payload: ComposerBootstrapPayload) => void): () => void;
   commitComposer(payload: ComposerCommitPayload): Promise<void>;
+  notifyComposerMounted(payload: ComposerSessionMountedPayload): void;
+  notifyComposerFocusSnapshot(payload: ComposerFocusSnapshotPayload): void;
   discardComposer(): Promise<void>;
 }
 
@@ -31,13 +35,15 @@ const FALLBACK_BOOTSTRAP: ComposerBootstrapPayload = {
 };
 
 const fallbackApi: DesktopRendererApi = {
-  async getComposerBootstrap(): Promise<ComposerBootstrapPayload> {
+  async getComposerBootstrap(): Promise<ComposerBootstrapPayload | null> {
     return FALLBACK_BOOTSTRAP;
   },
   onComposerBootstrap(): () => void {
     return () => {};
   },
   async commitComposer(): Promise<void> {},
+  notifyComposerMounted(): void {},
+  notifyComposerFocusSnapshot(): void {},
   async discardComposer(): Promise<void> {}
 };
 

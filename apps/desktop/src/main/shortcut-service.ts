@@ -1,4 +1,4 @@
-import { globalShortcut } from "electron";
+import { globalShortcut } from "./electron-main.js";
 import { log } from "./logger.js";
 
 /**

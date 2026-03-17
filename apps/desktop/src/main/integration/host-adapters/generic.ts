@@ -7,7 +7,8 @@ export const GENERIC_HOST_ADAPTER: HostAdapterDefinition & {
   matches(context: HostContext): boolean;
 } = {
   id: "generic",
-  captureBehavior: "selection_probe",
+  captureBehavior: "select_all_copy",
+  commitBehavior: "select_all_paste",
   postCommitKeys: [],
   matches(): boolean {
     return true;

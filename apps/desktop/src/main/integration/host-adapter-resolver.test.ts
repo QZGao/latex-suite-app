@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { HostContext } from "@latex-suite/contracts";
-import { resolveHostAdapter } from "./host-adapter-resolver.js";
+import { listHostAdapters, resolveHostAdapter } from "./host-adapter-resolver.js";
 
 function createContext(processName: string): HostContext {
   return {
@@ -17,8 +17,20 @@ describe("resolveHostAdapter", () => {
     expect(adapter.id).toBe("notion-formula");
   });
 
+  it("matches notion regardless of process-name casing", () => {
+    const adapter = resolveHostAdapter(createContext("NOTION.EXE"));
+    expect(adapter.id).toBe("notion-formula");
+  });
+
   it("falls back to generic adapter", () => {
     const adapter = resolveHostAdapter(createContext("Code.exe"));
     expect(adapter.id).toBe("generic");
+  });
+
+  it("returns the known adapters in matching order", () => {
+    expect(listHostAdapters().map((adapter) => adapter.id)).toEqual([
+      "notion-formula",
+      "generic"
+    ]);
   });
 });
