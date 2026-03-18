@@ -4,6 +4,10 @@
 
 Lightweight Windows app for fast LaTeX composition. Built with Electron on top of the [LaTeX Suite Core](https://github.com/QZGao/latex-suite-core) CodeMirror 6 Extension, which is a fork of the popular [Obsidian LaTeX Suite](https://github.com/artisticat1/obsidian-latex-suite).
 
+The experience is essentially the same as below (from Obsidian LaTeX Suite's demo), except that `$$` is unneeded:
+
+![Obsidian LaTeX Suite Demo](https://raw.githubusercontent.com/artisticat1/obsidian-latex-suite/main/gifs/demo.gif)
+
 ## Features
 
 - Fast LaTeX composition with live preview.
